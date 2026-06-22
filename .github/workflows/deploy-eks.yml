@@ -111,10 +111,19 @@ jobs:
 
       - name: Esperar Frontend
         run: |
+          - name: Esperar Frontend
+        run: |
           kubectl rollout status deployment/innovatech-frontend -n $EKS_NAMESPACE --timeout=180s || true
-          kubectl get pods -n $EKS_NAMESPACE
+          echo "===== PODS FRONTEND ====="
+          kubectl get pods -n $EKS_NAMESPACE -l app=innovatech-frontend -o wide
+          echo "===== DESCRIBE FRONTEND ====="
+          kubectl describe pods -n $EKS_NAMESPACE -l app=innovatech-frontend
+          echo "===== LOGS FRONTEND ====="
+          kubectl logs -n $EKS_NAMESPACE -l app=innovatech-frontend --tail=100 || true
+          echo "===== EVENTOS ====="
+          kubectl get events -n $EKS_NAMESPACE --sort-by=.lastTimestamp | tail -50
+          echo "===== SERVICES ====="
           kubectl get svc -n $EKS_NAMESPACE
-
       - name: Aplicar HPA
         run: |
           kubectl apply -f k8s/ventas-hpa.yaml
