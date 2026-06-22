@@ -3,9 +3,8 @@ name: CI/CD Innovatech EKS
 on:
   push:
     branches:
-      - main
+      - deploy
   workflow_dispatch:
-
 env:
   AWS_REGION: us-east-1
   EKS_CLUSTER_NAME: innovatech-eks
