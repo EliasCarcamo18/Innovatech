@@ -4,7 +4,7 @@ metadata:
   name: innovatech-despachos
   namespace: innovatech
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: innovatech-despachos

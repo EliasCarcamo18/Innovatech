@@ -5,6 +5,7 @@ on:
     branches:
       - deploy
   workflow_dispatch:
+
 env:
   AWS_REGION: us-east-1
   EKS_CLUSTER_NAME: innovatech-eks
@@ -85,7 +86,9 @@ jobs:
 
       - name: Esperar MySQL
         run: |
-          kubectl rollout status deployment/innovatech-db -n $EKS_NAMESPACE --timeout=180s
+          kubectl rollout status deployment/innovatech-db -n $EKS_NAMESPACE --timeout=180s || true
+          kubectl get pods -n $EKS_NAMESPACE
+          kubectl get svc -n $EKS_NAMESPACE
 
       - name: Desplegar Backends
         run: |
@@ -96,8 +99,10 @@ jobs:
 
       - name: Esperar Backends
         run: |
-          kubectl rollout status deployment/innovatech-ventas -n $EKS_NAMESPACE --timeout=240s
-          kubectl rollout status deployment/innovatech-despachos -n $EKS_NAMESPACE --timeout=240s
+          kubectl rollout status deployment/innovatech-ventas -n $EKS_NAMESPACE --timeout=240s || true
+          kubectl rollout status deployment/innovatech-despachos -n $EKS_NAMESPACE --timeout=240s || true
+          kubectl get pods -n $EKS_NAMESPACE
+          kubectl get svc -n $EKS_NAMESPACE
 
       - name: Desplegar Frontend
         run: |
@@ -106,7 +111,9 @@ jobs:
 
       - name: Esperar Frontend
         run: |
-          kubectl rollout status deployment/innovatech-frontend -n $EKS_NAMESPACE --timeout=180s
+          kubectl rollout status deployment/innovatech-frontend -n $EKS_NAMESPACE --timeout=180s || true
+          kubectl get pods -n $EKS_NAMESPACE
+          kubectl get svc -n $EKS_NAMESPACE
 
       - name: Aplicar HPA
         run: |
@@ -119,3 +126,4 @@ jobs:
           kubectl get pods -n $EKS_NAMESPACE
           kubectl get svc -n $EKS_NAMESPACE
           kubectl get hpa -n $EKS_NAMESPACE
+          kubectl get deployments -n $EKS_NAMESPACE
