@@ -87,7 +87,9 @@ jobs:
       - name: Esperar MySQL
         run: |
           kubectl rollout status deployment/innovatech-db -n $EKS_NAMESPACE --timeout=180s || true
-          kubectl get pods -n $EKS_NAMESPACE
+          echo "===== PODS DESPUÉS DE MYSQL ====="
+          kubectl get pods -n $EKS_NAMESPACE -o wide
+          echo "===== SERVICES DESPUÉS DE MYSQL ====="
           kubectl get svc -n $EKS_NAMESPACE
 
       - name: Desplegar Backends
@@ -96,34 +98,42 @@ jobs:
           kubectl apply -f k8s/ventas-service.yaml
           kubectl apply -f k8s/despachos-deployment.yaml
           kubectl apply -f k8s/despachos-service.yaml
+          kubectl rollout restart deployment/innovatech-ventas -n $EKS_NAMESPACE || true
+          kubectl rollout restart deployment/innovatech-despachos -n $EKS_NAMESPACE || true
 
       - name: Esperar Backends
         run: |
           kubectl rollout status deployment/innovatech-ventas -n $EKS_NAMESPACE --timeout=240s || true
           kubectl rollout status deployment/innovatech-despachos -n $EKS_NAMESPACE --timeout=240s || true
-          kubectl get pods -n $EKS_NAMESPACE
+          echo "===== PODS BACKENDS ====="
+          kubectl get pods -n $EKS_NAMESPACE -o wide
+          echo "===== SERVICES BACKENDS ====="
           kubectl get svc -n $EKS_NAMESPACE
+          echo "===== LOGS VENTAS ====="
+          kubectl logs -n $EKS_NAMESPACE -l app=innovatech-ventas --tail=80 || true
+          echo "===== LOGS DESPACHOS ====="
+          kubectl logs -n $EKS_NAMESPACE -l app=innovatech-despachos --tail=80 || true
 
       - name: Desplegar Frontend
         run: |
           kubectl apply -f k8s/frontend-deployment.yaml
           kubectl apply -f k8s/frontend-service.yaml
+          kubectl rollout restart deployment/innovatech-frontend -n $EKS_NAMESPACE || true
 
       - name: Esperar Frontend
-        run: |
-          - name: Esperar Frontend
         run: |
           kubectl rollout status deployment/innovatech-frontend -n $EKS_NAMESPACE --timeout=180s || true
           echo "===== PODS FRONTEND ====="
           kubectl get pods -n $EKS_NAMESPACE -l app=innovatech-frontend -o wide
           echo "===== DESCRIBE FRONTEND ====="
-          kubectl describe pods -n $EKS_NAMESPACE -l app=innovatech-frontend
+          kubectl describe pods -n $EKS_NAMESPACE -l app=innovatech-frontend || true
           echo "===== LOGS FRONTEND ====="
           kubectl logs -n $EKS_NAMESPACE -l app=innovatech-frontend --tail=100 || true
           echo "===== EVENTOS ====="
           kubectl get events -n $EKS_NAMESPACE --sort-by=.lastTimestamp | tail -50
           echo "===== SERVICES ====="
           kubectl get svc -n $EKS_NAMESPACE
+
       - name: Aplicar HPA
         run: |
           kubectl apply -f k8s/ventas-hpa.yaml
@@ -132,7 +142,11 @@ jobs:
 
       - name: Mostrar recursos finales
         run: |
-          kubectl get pods -n $EKS_NAMESPACE
+          echo "===== PODS FINALES ====="
+          kubectl get pods -n $EKS_NAMESPACE -o wide
+          echo "===== SERVICES FINALES ====="
           kubectl get svc -n $EKS_NAMESPACE
+          echo "===== HPA ====="
           kubectl get hpa -n $EKS_NAMESPACE
+          echo "===== DEPLOYMENTS ====="
           kubectl get deployments -n $EKS_NAMESPACE
