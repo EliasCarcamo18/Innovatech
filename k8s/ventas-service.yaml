@@ -1,13 +1,13 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: innovatech-frontend-hpa
+  name: innovatech-ventas-hpa
   namespace: innovatech
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: innovatech-frontend
+    name: innovatech-ventas
   minReplicas: 2
   maxReplicas: 6
   metrics:
@@ -16,4 +16,4 @@ spec:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 60
+          averageUtilization: 70

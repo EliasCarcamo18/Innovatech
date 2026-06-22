@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tienda-db
-  namespace: tienda
+  name: innovatech-db
+  namespace: innovatech
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: tienda-db
+      app: innovatech-db
   template:
     metadata:
       labels:
-        app: tienda-db
+        app: innovatech-db
     spec:
       containers:
         - name: mysql
-          image: 542768639545.dkr.ecr.us-east-1.amazonaws.com/tienda-db:eks-v1 # Colocar uri de tu imagen en ECR
+          image: 578313522238.dkr.ecr.us-east-1.amazonaws.com/innovatech-db:eks-v1
           ports:
             - containerPort: 3306
           env:
@@ -24,9 +24,18 @@ spec:
                 secretKeyRef:
                   name: mysql-secret
                   key: MYSQL_ROOT_PASSWORD
+            - name: MYSQL_DATABASE
+              value: "innovatech_db"
           volumeMounts:
-            - name: data
+            - name: mysql-data
               mountPath: /var/lib/mysql
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
       volumes:
-        - name: data
+        - name: mysql-data
           emptyDir: {}

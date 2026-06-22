@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: innovatech-db
+  name: innovatech-ventas
   namespace: innovatech
 spec:
   selector:
-    app: innovatech-db
+    app: innovatech-ventas
   ports:
     - protocol: TCP
-      port: 3306
-      targetPort: 3306
+      port: 8080
+      targetPort: 8080
   type: ClusterIP
