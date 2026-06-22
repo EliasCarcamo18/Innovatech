@@ -16,6 +16,7 @@ spec:
       containers:
         - name: frontend
           image: 578313522238.dkr.ecr.us-east-1.amazonaws.com/innovatech-frontend:eks-v1
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
           resources:
