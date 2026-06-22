@@ -32,3 +32,4 @@ public class Venta {
     @NotNull(message = "El campo de despacho debe ser proporcionado")
     private Boolean despachoGenerado = false;
 }
+
