@@ -16,6 +16,7 @@ spec:
       containers:
         - name: mysql
           image: 578313522238.dkr.ecr.us-east-1.amazonaws.com/innovatech-db:eks-v1
+          imagePullPolicy: Always
           ports:
             - containerPort: 3306
           env:

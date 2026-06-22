@@ -1,3 +1,4 @@
+```yaml
 name: CI/CD Innovatech EKS
 
 on:
@@ -83,6 +84,7 @@ jobs:
           kubectl apply -f k8s/mysql-secret.yaml
           kubectl apply -f k8s/mysql-deployment.yaml
           kubectl apply -f k8s/mysql-service.yaml
+          kubectl rollout restart deployment/innovatech-db -n $EKS_NAMESPACE || true
 
       - name: Esperar MySQL
         run: |
@@ -91,6 +93,15 @@ jobs:
           kubectl get pods -n $EKS_NAMESPACE -o wide
           echo "===== SERVICES DESPUÉS DE MYSQL ====="
           kubectl get svc -n $EKS_NAMESPACE
+
+      - name: Verificar Base de Datos
+        run: |
+          echo "===== VERIFICANDO MYSQL ====="
+          DB_PASS=$(kubectl get secret mysql-secret -n $EKS_NAMESPACE -o jsonpath="{.data.MYSQL_ROOT_PASSWORD}" | base64 -d)
+          kubectl exec -n $EKS_NAMESPACE deployment/innovatech-db -- mysql -uroot -p"$DB_PASS" -e "SHOW DATABASES;" || true
+          kubectl exec -n $EKS_NAMESPACE deployment/innovatech-db -- mysql -uroot -p"$DB_PASS" -e "USE innovatech_db; SHOW TABLES;" || true
+          kubectl exec -n $EKS_NAMESPACE deployment/innovatech-db -- mysql -uroot -p"$DB_PASS" -e "USE innovatech_db; SELECT COUNT(*) AS total_ventas FROM venta;" || true
+          kubectl exec -n $EKS_NAMESPACE deployment/innovatech-db -- mysql -uroot -p"$DB_PASS" -e "USE innovatech_db; SELECT COUNT(*) AS total_despachos FROM despacho;" || true
 
       - name: Desplegar Backends
         run: |
@@ -150,3 +161,4 @@ jobs:
           kubectl get hpa -n $EKS_NAMESPACE
           echo "===== DEPLOYMENTS ====="
           kubectl get deployments -n $EKS_NAMESPACE
+```
