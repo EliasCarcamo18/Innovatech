@@ -1,139 +1,137 @@
-name: CI/CD Innovatech EKS
+﻿name: CI/CD Innovatech EKS
 
 on:
-push:
-branches:
-- deploy
-workflow_dispatch:
+  push:
+    branches:
+      - deploy
+  workflow_dispatch:
 
 env:
-AWS_REGION: us-east-1
-EKS_CLUSTER_NAME: innovatech-eks
-EKS_NAMESPACE: innovatech
-IMAGE_TAG: eks-v1
-ECR_FRONTEND: innovatech-frontend
-ECR_VENTAS: innovatech-ventas
-ECR_DESPACHOS: innovatech-despachos
-ECR_DB: innovatech-db
+  AWS_REGION: us-east-1
+  EKS_CLUSTER_NAME: innovatech-eks
+  EKS_NAMESPACE: innovatech
+  IMAGE_TAG: eks-v1
+  ECR_FRONTEND: innovatech-frontend
+  ECR_VENTAS: innovatech-ventas
+  ECR_DESPACHOS: innovatech-despachos
+  ECR_DB: innovatech-db
 
 jobs:
-build-push-deploy:
-name: Build, Push and Deploy to EKS
-runs-on: ubuntu-latest
+  build-push-deploy:
+    name: Build, Push and Deploy to EKS
+    runs-on: ubuntu-latest
 
-```
-steps:
-  - name: Descargar codigo
-    uses: actions/checkout@v4
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
 
-  - name: Configurar credenciales AWS Academy
-    uses: aws-actions/configure-aws-credentials@v4
-    with:
-      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-      aws-region: ${{ env.AWS_REGION }}
+      - name: Configurar credenciales AWS Academy
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
 
-  - name: Instalar kubectl
-    uses: azure/setup-kubectl@v4
-    with:
-      version: latest
+      - name: Instalar kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: latest
 
-  - name: Login en Amazon ECR
-    id: login-ecr
-    uses: aws-actions/amazon-ecr-login@v2
+      - name: Login en Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-  - name: Crear repositorios ECR si no existen
-    run: |
-      aws ecr describe-repositories --repository-names $ECR_FRONTEND || aws ecr create-repository --repository-name $ECR_FRONTEND
-      aws ecr describe-repositories --repository-names $ECR_VENTAS || aws ecr create-repository --repository-name $ECR_VENTAS
-      aws ecr describe-repositories --repository-names $ECR_DESPACHOS || aws ecr create-repository --repository-name $ECR_DESPACHOS
-      aws ecr describe-repositories --repository-names $ECR_DB || aws ecr create-repository --repository-name $ECR_DB
+      - name: Crear repositorios ECR si no existen
+        run: |
+          aws ecr describe-repositories --repository-names $ECR_FRONTEND || aws ecr create-repository --repository-name $ECR_FRONTEND
+          aws ecr describe-repositories --repository-names $ECR_VENTAS || aws ecr create-repository --repository-name $ECR_VENTAS
+          aws ecr describe-repositories --repository-names $ECR_DESPACHOS || aws ecr create-repository --repository-name $ECR_DESPACHOS
+          aws ecr describe-repositories --repository-names $ECR_DB || aws ecr create-repository --repository-name $ECR_DB
 
-  - name: Build y Push Frontend Real
-    run: |
-      docker build -t $ECR_FRONTEND ./frontend/front_despacho
-      docker tag $ECR_FRONTEND:latest ${{ steps.login-ecr.outputs.registry }}/$ECR_FRONTEND:$IMAGE_TAG
-      docker push ${{ steps.login-ecr.outputs.registry }}/$ECR_FRONTEND:$IMAGE_TAG
+      - name: Build y Push Frontend Real
+        run: |
+          docker build -t $ECR_FRONTEND ./frontend/front_despacho
+          docker tag $ECR_FRONTEND:latest ${{ steps.login-ecr.outputs.registry }}/$ECR_FRONTEND:$IMAGE_TAG
+          docker push ${{ steps.login-ecr.outputs.registry }}/$ECR_FRONTEND:$IMAGE_TAG
 
-  - name: Build y Push Backend Ventas
-    run: |
-      docker build -t $ECR_VENTAS ./backend-ventas
-      docker tag $ECR_VENTAS:latest ${{ steps.login-ecr.outputs.registry }}/$ECR_VENTAS:$IMAGE_TAG
-      docker push ${{ steps.login-ecr.outputs.registry }}/$ECR_VENTAS:$IMAGE_TAG
+      - name: Build y Push Backend Ventas
+        run: |
+          docker build -t $ECR_VENTAS ./backend-ventas
+          docker tag $ECR_VENTAS:latest ${{ steps.login-ecr.outputs.registry }}/$ECR_VENTAS:$IMAGE_TAG
+          docker push ${{ steps.login-ecr.outputs.registry }}/$ECR_VENTAS:$IMAGE_TAG
 
-  - name: Build y Push Backend Despachos
-    run: |
-      docker build -t $ECR_DESPACHOS ./backend-despachos
-      docker tag $ECR_DESPACHOS:latest ${{ steps.login-ecr.outputs.registry }}/$ECR_DESPACHOS:$IMAGE_TAG
-      docker push ${{ steps.login-ecr.outputs.registry }}/$ECR_DESPACHOS:$IMAGE_TAG
+      - name: Build y Push Backend Despachos
+        run: |
+          docker build -t $ECR_DESPACHOS ./backend-despachos
+          docker tag $ECR_DESPACHOS:latest ${{ steps.login-ecr.outputs.registry }}/$ECR_DESPACHOS:$IMAGE_TAG
+          docker push ${{ steps.login-ecr.outputs.registry }}/$ECR_DESPACHOS:$IMAGE_TAG
 
-  - name: Build y Push Base de Datos
-    run: |
-      docker build -t $ECR_DB ./db
-      docker tag $ECR_DB:latest ${{ steps.login-ecr.outputs.registry }}/$ECR_DB:$IMAGE_TAG
-      docker push ${{ steps.login-ecr.outputs.registry }}/$ECR_DB:$IMAGE_TAG
+      - name: Build y Push Base de Datos
+        run: |
+          docker build -t $ECR_DB ./db
+          docker tag $ECR_DB:latest ${{ steps.login-ecr.outputs.registry }}/$ECR_DB:$IMAGE_TAG
+          docker push ${{ steps.login-ecr.outputs.registry }}/$ECR_DB:$IMAGE_TAG
 
-  - name: Conectar kubectl al cluster EKS
-    run: |
-      aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
+      - name: Conectar kubectl al cluster EKS
+        run: |
+          aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
 
-  - name: Desplegar Namespace y MySQL
-    run: |
-      kubectl apply -f k8s/namespace.yaml
-      kubectl apply -f k8s/mysql-secret.yaml
-      kubectl apply -f k8s/mysql-deployment.yaml
-      kubectl apply -f k8s/mysql-service.yaml
-      kubectl rollout restart deployment/innovatech-db -n $EKS_NAMESPACE || true
+      - name: Desplegar Namespace y MySQL
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/mysql-secret.yaml
+          kubectl apply -f k8s/mysql-deployment.yaml
+          kubectl apply -f k8s/mysql-service.yaml
+          kubectl rollout restart deployment/innovatech-db -n $EKS_NAMESPACE || true
 
-  - name: Esperar MySQL
-    run: |
-      kubectl rollout status deployment/innovatech-db -n $EKS_NAMESPACE --timeout=240s || true
-      kubectl get pods -n $EKS_NAMESPACE -o wide
-      kubectl get svc -n $EKS_NAMESPACE
+      - name: Esperar MySQL
+        run: |
+          kubectl rollout status deployment/innovatech-db -n $EKS_NAMESPACE --timeout=240s || true
+          kubectl get pods -n $EKS_NAMESPACE -o wide
+          kubectl get svc -n $EKS_NAMESPACE
 
-  - name: Desplegar Backends
-    run: |
-      kubectl apply -f k8s/ventas-deployment.yaml
-      kubectl apply -f k8s/ventas-service.yaml
-      kubectl apply -f k8s/despachos-deployment.yaml
-      kubectl apply -f k8s/despachos-service.yaml
-      kubectl rollout restart deployment/innovatech-ventas -n $EKS_NAMESPACE || true
-      kubectl rollout restart deployment/innovatech-despachos -n $EKS_NAMESPACE || true
+      - name: Desplegar Backends
+        run: |
+          kubectl apply -f k8s/ventas-deployment.yaml
+          kubectl apply -f k8s/ventas-service.yaml
+          kubectl apply -f k8s/despachos-deployment.yaml
+          kubectl apply -f k8s/despachos-service.yaml
+          kubectl rollout restart deployment/innovatech-ventas -n $EKS_NAMESPACE || true
+          kubectl rollout restart deployment/innovatech-despachos -n $EKS_NAMESPACE || true
 
-  - name: Esperar Backends
-    run: |
-      kubectl rollout status deployment/innovatech-ventas -n $EKS_NAMESPACE --timeout=240s || true
-      kubectl rollout status deployment/innovatech-despachos -n $EKS_NAMESPACE --timeout=240s || true
-      kubectl get pods -n $EKS_NAMESPACE -o wide
-      kubectl get svc -n $EKS_NAMESPACE
-      kubectl logs -n $EKS_NAMESPACE -l app=innovatech-ventas --tail=80 || true
-      kubectl logs -n $EKS_NAMESPACE -l app=innovatech-despachos --tail=80 || true
+      - name: Esperar Backends
+        run: |
+          kubectl rollout status deployment/innovatech-ventas -n $EKS_NAMESPACE --timeout=240s || true
+          kubectl rollout status deployment/innovatech-despachos -n $EKS_NAMESPACE --timeout=240s || true
+          kubectl get pods -n $EKS_NAMESPACE -o wide
+          kubectl get svc -n $EKS_NAMESPACE
+          kubectl logs -n $EKS_NAMESPACE -l app=innovatech-ventas --tail=80 || true
+          kubectl logs -n $EKS_NAMESPACE -l app=innovatech-despachos --tail=80 || true
 
-  - name: Desplegar Frontend
-    run: |
-      kubectl apply -f k8s/frontend-deployment.yaml
-      kubectl apply -f k8s/frontend-service.yaml
-      kubectl rollout restart deployment/innovatech-frontend -n $EKS_NAMESPACE || true
+      - name: Desplegar Frontend
+        run: |
+          kubectl apply -f k8s/frontend-deployment.yaml
+          kubectl apply -f k8s/frontend-service.yaml
+          kubectl rollout restart deployment/innovatech-frontend -n $EKS_NAMESPACE || true
 
-  - name: Esperar Frontend
-    run: |
-      kubectl rollout status deployment/innovatech-frontend -n $EKS_NAMESPACE --timeout=180s || true
-      kubectl get pods -n $EKS_NAMESPACE -l app=innovatech-frontend -o wide
-      kubectl describe pods -n $EKS_NAMESPACE -l app=innovatech-frontend || true
-      kubectl logs -n $EKS_NAMESPACE -l app=innovatech-frontend --tail=100 || true
-      kubectl get svc -n $EKS_NAMESPACE
+      - name: Esperar Frontend
+        run: |
+          kubectl rollout status deployment/innovatech-frontend -n $EKS_NAMESPACE --timeout=180s || true
+          kubectl get pods -n $EKS_NAMESPACE -l app=innovatech-frontend -o wide
+          kubectl describe pods -n $EKS_NAMESPACE -l app=innovatech-frontend || true
+          kubectl logs -n $EKS_NAMESPACE -l app=innovatech-frontend --tail=100 || true
+          kubectl get svc -n $EKS_NAMESPACE
 
-  - name: Aplicar HPA
-    run: |
-      kubectl apply -f k8s/ventas-hpa.yaml
-      kubectl apply -f k8s/despachos-hpa.yaml
-      kubectl apply -f k8s/frontend-hpa.yaml
+      - name: Aplicar HPA
+        run: |
+          kubectl apply -f k8s/ventas-hpa.yaml
+          kubectl apply -f k8s/despachos-hpa.yaml
+          kubectl apply -f k8s/frontend-hpa.yaml
 
-  - name: Mostrar recursos finales
-    run: |
-      kubectl get pods -n $EKS_NAMESPACE -o wide
-      kubectl get svc -n $EKS_NAMESPACE
-      kubectl get hpa -n $EKS_NAMESPACE
-      kubectl get deployments -n $EKS_NAMESPACE
-```
+      - name: Mostrar recursos finales
+        run: |
+          kubectl get pods -n $EKS_NAMESPACE -o wide
+          kubectl get svc -n $EKS_NAMESPACE
+          kubectl get hpa -n $EKS_NAMESPACE
+          kubectl get deployments -n $EKS_NAMESPACE
