@@ -60,6 +60,7 @@ public class VentaController {
     public ResponseEntity<Void> eliminarVenta(@PathVariable Long idVenta) throws VentaNotFoundException {
         ventaService.deleteVenta(idVenta);
         return ResponseEntity.noContent().build(); // Respuesta 204 No Content si se elimina correctamente
+        
     }
 }
 
